@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="this.$props.dataset.length > 0">
     <v-progress-linear
       :value="this.idx / (this.$props.dataset.length / 100)"
     ></v-progress-linear>
@@ -7,7 +7,7 @@
     <br />
     <v-row no-gutters>
       <v-col cols="12" sm="6">
-        <img width="300" v-if="previewImage" :src="previewImage" />
+        <img width="400" v-if="previewImage" :src="previewImage" />
         <br />
         <br />
         <h4>Text</h4>
@@ -23,6 +23,7 @@
             width: '30px',
             display: 'inline-block',
             height: '30px',
+            border: '1px solid #000',
             'background-color': `rgb(${c[0]}, ${c[1]}, ${c[2]})`,
           }"
         ></div>
@@ -39,7 +40,7 @@
         <v-form v-model="valid" v-if="!isLoading">
           <v-jsf
             v-model="model"
-            :options="{ editMode: 'inline' }"
+            :options="{ editMode: 'inline', context: this }"
             :schema="schema"
           />
         </v-form>
@@ -56,8 +57,10 @@ import "@koumoul/vjsf/lib/deps/third-party.js";
 import VJsf from "@koumoul/vjsf";
 import "@koumoul/vjsf/dist/main.css";
 import "regenerator-runtime/runtime";
+import { v4 as uuidv4 } from "uuid";
+
 export default {
-  props: ["dataset", "orgchart_id"],
+  props: ["dataset", "parents", "orgchart_id"],
   components: { VJsf },
   name: "OrgchartAnnotationEditor",
   watch: {
@@ -79,9 +82,9 @@ export default {
         "&position="
       )}`;
 
-      if ("parsed" in this.$props.dataset[this.idx]) {
-        this.model = this.$props.dataset[this.idx]["parsed"];
-        this.annotations = this.$props.dataset[this.idx]["annotations"];
+      if (this.idx in this.results) {
+        this.model = this.results[this.idx]["parsed"];
+        this.annotations = this.results[this.idx]["annotations"];
       } else {
         this.isLoading = true;
         this.axios
@@ -94,8 +97,9 @@ export default {
       }
     },
     storeCurrentItem() {
-      this.$props.dataset[this.idx]["parsed"] = this.model;
-      this.$props.dataset[this.idx]["annotations"] = this.annotations;
+      this.results[this.idx] = {};
+      this.results[this.idx]["parsed"] = this.model["organisations"];
+      this.results[this.idx]["annotations"] = this.annotations;
       this.annotations = [];
       this.model = null;
     },
@@ -104,8 +108,21 @@ export default {
       if (this.idx + 1 < this.$props.dataset.length) {
         this.idx = this.idx + 1;
       } else {
-        this.$emit("annotationDone");
+        this.postProcessAnnotations();
       }
+    },
+    postProcessAnnotations() {
+      var orgs = [];
+      for (let o in this.results) {
+        for (let e in this.results[o]["parsed"]) {
+          orgs.push({
+            organisation: this.results[o]["parsed"][e],
+            source: this.$props.dataset[o],
+          });
+        }
+      }
+      console.log(orgs);
+      this.$emit("annotationDone", orgs);
     },
     previousItem() {
       this.storeCurrentItem();
@@ -116,8 +133,52 @@ export default {
       }
     },
     loadAnnotationsDone(response) {
+      // add the element id to the first element in our list
+      response["parsed"][0]["id"] = this.dataset[this.idx]["id"];
+      // give each other element a new uuid and assign each of them the common parent id
+      for (let i in response["parsed"]) {
+        if (!("id" in response["parsed"][i])) {
+          response["parsed"][i]["id"] = uuidv4();
+        }
+        // assign parent id
+        if (this.dataset[this.idx]["id"] in this.$props.parents) {
+          console.log(this.$props.parents[this.dataset[this.idx]["id"]]);
+          response["parsed"][i]["parentId"] = {
+            val: this.$props.parents[this.dataset[this.idx]["id"]],
+          };
+        } else {
+          // if there is no parent, assign null.
+          response["parsed"][i]["parentId"] = { val: null, label: "No Parent" };
+        }
+      }
       this.annotations = response;
       this.isLoading = false;
+    },
+  },
+  computed: {
+    allParents() {
+      let parents = [];
+      let parent_keys = [];
+
+      for (let i in this.model["organisations"]) {
+        if (!(this.model.organisations[i]["id"] in parent_keys)) {
+          parents.push({
+            val: this.model["organisations"][i]["id"],
+            label: this.model["organisations"][i]["name"],
+          });
+          parent_keys.push(this.model["organisations"][i]["id"]);
+        }
+      }
+      for (let i in this.dataset) {
+        if (!(this.dataset[i]["id"] in parent_keys)) {
+          parents.push({
+            val: this.dataset[i]["id"],
+            label: this.dataset[i]["text"],
+          });
+          parent_keys.push(this.dataset[i]["id"]);
+        }
+      }
+      return parents;
     },
   },
   data() {
@@ -132,15 +193,16 @@ export default {
             items: {
               type: "object",
               properties: {
-                short_name: {
+                shortName: {
                   type: "string",
                   title: "short name",
                 },
                 name: {
                   type: "string",
                   title: "name",
+                  "x-display": "textarea",
                 },
-                dial_codes: {
+                dialCodes: {
                   type: "array",
                   items: {
                     type: "string",
@@ -155,9 +217,22 @@ export default {
                       name: { type: "string" },
                       position: { type: "string" },
                     },
-                    required: ["name", "surname"],
+                    required: ["name"],
                   },
                 },
+                id: {
+                  type: "string",
+                  title: "ID",
+                  readOnly: true,
+                },
+                parentId: {
+                  type: "object",
+                  title: "Parent Element",
+                  "x-fromData": "context.allParents",
+                  "x-itemKey": "val",
+                  "x-itemTitle": "label",
+                },
+                required: ["name"],
               },
             },
           },
@@ -169,6 +244,7 @@ export default {
       valid: null,
       model: null,
       isLoading: false,
+      results: {},
     };
   },
 };

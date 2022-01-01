@@ -1,0 +1,12 @@
+query orgChart($id: ID!){
+  orgChart(id:$id) {
+    id
+    status
+    document
+    createdAt
+    rawSource
+    orgChartUrl {
+      url
+    }
+  }
+}

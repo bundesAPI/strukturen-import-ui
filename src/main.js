@@ -7,6 +7,7 @@ import VueAxios from "vue-axios";
 import router from "./router";
 import VJsf from "@koumoul/vjsf";
 import "@koumoul/vjsf/dist/main.css";
+import { createProvider } from "./vue-apollo";
 
 Vue.component("VJsf", VJsf);
 
@@ -24,5 +25,6 @@ Vue.config.productionTip = false;
 new Vue({
   vuetify,
   router,
+  apolloProvider: createProvider(),
   render: (h) => h(App),
 }).$mount("#app");

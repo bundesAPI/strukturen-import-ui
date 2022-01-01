@@ -1,0 +1,18 @@
+{
+  allOrgCharts {
+    edges {
+      node {
+        id
+        documentHash
+        orgChartUrl {
+          organisationEntity {
+            name
+          }
+        }
+        createdAt
+        document
+        status
+      }
+    }
+  }
+}

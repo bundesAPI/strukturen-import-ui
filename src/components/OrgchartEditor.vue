@@ -70,7 +70,7 @@
       id="overlay"
       color="white"
       elevation="1"
-      height="100"
+      height="140"
       width="200"
       v-if="selected.length > 0"
     >
@@ -83,6 +83,9 @@
         <v-btn depressed color="primary" @click="selectParentMode = true">
           assign parent
         </v-btn>
+        <v-btn depressed color="error" @click="deleteElements()">
+          delete
+        </v-btn>
       </div>
     </v-sheet>
   </div>
@@ -91,18 +94,13 @@
 <script>
 import Konva from "konva";
 import "vue-json-pretty/lib/styles.css";
+import * as AUTH from "../auth";
 
 export default {
   name: "OrgchartEditor",
   components: {},
   props: ["id"],
   mounted() {
-    this.axios
-      .get(
-        `http://127.0.0.1:8090/analyze-orgchart/?orgchart_id=${this.$props.id}&page=0`
-      )
-      .then((response) => (this.dataset = response["data"]["items"]));
-
     const image = new window.Image();
     image.src = `http://127.0.0.1:8090/orgchart-image/?orgchart_id=${this.$props.id}&page=0`;
     image.onload = () => {
@@ -170,16 +168,12 @@ export default {
         selectionRectangle.visible(false);
       });
 
-      console.log(stage);
       var shapes = stage.find(".grp");
 
-      console.log(shapes);
       var box = selectionRectangle.getClientRect();
-      console.log(box);
       var selected = shapes.filter((shape) =>
         Konva.Util.haveIntersection(box, shape.getClientRect())
       );
-      console.log(selected);
       tr.nodes(selected);
       let ids = [];
       for (let i in selected) {
@@ -203,7 +197,6 @@ export default {
         return;
       }
 
-      console.log(e.target);
       // do nothing if clicked NOT on our rectangles
       if (!e.target.parent.hasName("grp")) {
         return;
@@ -213,7 +206,6 @@ export default {
       const metaPressed = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey;
       const isSelected = tr.nodes().indexOf(e.target) >= 0;
 
-      console.log("select parent");
       if (this.selectParentMode) {
         this.assignParent(e.target.parent);
       } else if (!metaPressed && !isSelected) {
@@ -235,7 +227,6 @@ export default {
     },
     assignParent(parent) {
       let tr = this.$refs.transformer.getNode();
-      console.log(parent.attrs.id);
       if (!(parent.attrs.id in this.parentColors)) {
         this.parentColors[parent.attrs.id] = this.generateLightColorHex();
       }
@@ -245,15 +236,37 @@ export default {
       this.selectParentMode = false;
       this.selected = [];
       tr.nodes([]);
-      console.log(this.parents);
+    },
+
+    deleteElements() {
+      let delete_ids = [];
+      for (let i in this.selected) {
+        delete_ids.push(this.selected[i]);
+      }
+      for (let itm in this.dataset) {
+        if (delete_ids.includes(this.dataset[itm].id)) {
+          this.dataset.splice(itm, 1);
+        }
+      }
     },
   },
+
   watch: {
+    orgChart(orgchart) {
+      if (orgchart.status === "PARSED") {
+        this.dataset = JSON.parse(orgchart.rawSource).items;
+      } else {
+        this.axios
+          .get(
+            `http://127.0.0.1:8090/analyze-orgchart/?orgchart_id=${this.$props.id}&page=0`
+          )
+          .then((response) => (this.dataset = response["data"]["items"]));
+      }
+    },
     dataset: function (val) {
       let max_height = this.configKonva.height;
       let max_width = this.configKonva.width;
       for (let i in val) {
-        console.log(val[i]);
         if (max_width < val[i].position[2] * 2 + 200) {
           max_width = val[i].position[2] * 2 + 200;
         }
@@ -261,9 +274,6 @@ export default {
           max_height = val[i].position[3] * 2 + 200;
         }
       }
-      console.log("max width/height changed");
-      console.log(max_width);
-      console.log(max_height);
       this.configKonva = {
         width: max_width,
         height: max_height,
@@ -290,6 +300,21 @@ export default {
         height: 1400,
       },
     };
+  },
+  apollo: {
+    orgChart: {
+      query() {
+        return require("../graphql/orgChart.gql");
+      },
+      skip() {
+        return AUTH.isLoggedIn() === false;
+      },
+      variables() {
+        return {
+          id: this.$props.id,
+        };
+      },
+    },
   },
 };
 </script>

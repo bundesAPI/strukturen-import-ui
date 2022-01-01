@@ -1,0 +1,12 @@
+{
+  me {
+    groups {
+      id
+      name
+    }
+    firstName
+    lastName
+    language
+    profilePicture
+  }
+}

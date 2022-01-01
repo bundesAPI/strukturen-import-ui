@@ -1,0 +1,10 @@
+mutation($orgchartId: ID!, $rawJson: JSONString!) {
+  importOrgChart(orgchartId: $orgchartId, rawJson: $rawJson) {
+    orgChart {
+      documentHash
+      createdAt
+      status
+      id
+    }
+  }
+}

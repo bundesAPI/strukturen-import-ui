@@ -1,18 +1,32 @@
 <template>
-  <v-card height="400px" class="scroll">
-    <vue-json-pretty :path="'res'" :data="this.$props.json"> </vue-json-pretty>
-  </v-card>
+  <OrgchartRenderer :data="data"></OrgchartRenderer>
 </template>
 
 <script>
 import VueJsonPretty from "vue-json-pretty";
 import "vue-json-pretty/lib/styles.css";
+import OrgchartRenderer from "./OrgchartRenderer";
+
 export default {
   name: "OrgchartResult",
   components: {
+    // eslint-disable-next-line vue/no-unused-components
     VueJsonPretty,
+    OrgchartRenderer,
   },
   props: ["json"],
+
+  watch: {
+    json: function (val) {
+      this.data = val;
+    },
+  },
+
+  data() {
+    return {
+      data: null,
+    };
+  },
 };
 </script>
 
