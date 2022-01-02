@@ -102,7 +102,7 @@ export default {
   props: ["id"],
   mounted() {
     const image = new window.Image();
-    image.src = `http://127.0.0.1:8090/orgchart-image/?orgchart_id=${this.$props.id}&page=0`;
+    image.src = `${process.env.VUE_APP_ORGCHART_ML}/orgchart-image/?orgchart_id=${this.$props.id}&page=0`;
     image.onload = () => {
       // set image only when it is loaded
       this.backgroundImage = image;
@@ -258,7 +258,7 @@ export default {
       } else {
         this.axios
           .get(
-            `http://127.0.0.1:8090/analyze-orgchart/?orgchart_id=${this.$props.id}&page=0`
+            `${process.env.VUE_APP_ORGCHART_ML}/analyze-orgchart/?orgchart_id=${this.$props.id}&page=0`
           )
           .then((response) => (this.dataset = response["data"]["items"]));
       }

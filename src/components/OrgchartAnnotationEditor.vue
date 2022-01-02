@@ -76,7 +76,9 @@ export default {
   },
   methods: {
     loadData() {
-      this.previewImage = `http://127.0.0.1:8090/orgchart-image/?orgchart_id=${
+      this.previewImage = `${
+        process.env.VUE_APP_ORGCHART_ML
+      }/orgchart-image/?orgchart_id=${
         this.$props.orgchart_id
       }&page=0&position=${this.$props.dataset[this.idx].position.join(
         "&position="
@@ -89,7 +91,9 @@ export default {
         this.isLoading = true;
         this.axios
           .get(
-            `http://127.0.0.1:8090/analyze-orgchart-entry/?text=${encodeURI(
+            `${
+              process.env.VUE_APP_ORGCHART_ML
+            }/analyze-orgchart-entry/?text=${encodeURI(
               this.$props.dataset[this.idx].text
             )}`
           )
