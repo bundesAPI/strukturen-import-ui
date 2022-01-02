@@ -13,6 +13,8 @@
     "@babel/core": "^7.16.0",
     "@babel/preset-env": "^7.16.4",
     "@koumoul/vjsf": "^2.8.1",
+    "@sentry/tracing": "^6.16.1",
+    "@sentry/vue": "^6.16.1",
     "@vue/cli": "^4.5.15",
     "axios": "^0.24.0",
     "client-oauth2": "^4.3.3",
