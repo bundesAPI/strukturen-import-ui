@@ -25,31 +25,36 @@
           <v-group
             class="grp"
             v-for="item in dataset"
-            :key="item.id"
-            :config="{ draggable: true, name: 'grp', id: item.id }"
+            :key="item.source.id"
+            :config="{ draggable: true, name: 'grp', id: item.source.id }"
           >
             <v-rect
               :config="{
-                x: item.position[0] * 2,
-                y: item.position[1] * 2,
-                width: (item.position[2] - item.position[0]) * 2,
-                height: (item.position[3] - item.position[1]) * 2,
-                fill: item.id in parentColors ? parentColors[item.id] : 'white',
+                x: item.source.position[0] * 2,
+                y: item.source.position[1] * 2,
+                width: (item.source.position[2] - item.source.position[0]) * 2,
+                height: (item.source.position[3] - item.source.position[1]) * 2,
+                fill:
+                  item.source.id in parentColors
+                    ? parentColors[item.source.id]
+                    : 'white',
                 stroke:
-                  item.id in parents ? parentColors[parents[item.id]] : 'black',
-                strokeWidth: item.id in parents ? 4 : 2,
+                  item.source.id in parents
+                    ? parentColors[parents[item.source.id]]
+                    : 'black',
+                strokeWidth: item.source.id in parents ? 4 : 2,
               }"
             >
             </v-rect>
             <v-text
               :config="{
-                x: item.position[0] * 2,
-                y: item.position[1] * 2,
-                text: item.text,
+                x: item.source.position[0] * 2,
+                y: item.source.position[1] * 2,
+                text: item.source.text,
                 fontSize: 12,
                 fontFamily: 'Calibri',
                 fill: '#555',
-                width: (item.position[2] - item.position[0]) * 2,
+                width: (item.source.position[2] - item.source.position[0]) * 2,
                 padding: 5,
               }"
             ></v-text>
@@ -254,7 +259,7 @@ export default {
   watch: {
     orgChart(orgchart) {
       if (orgchart.status === "PARSED") {
-        this.dataset = JSON.parse(orgchart.rawSource).items;
+        this.dataset = JSON.parse(orgchart.rawSource);
       } else {
         this.axios
           .get(
@@ -266,6 +271,20 @@ export default {
     dataset: function (val) {
       let max_height = this.configKonva.height;
       let max_width = this.configKonva.width;
+
+      for (let i in val) {
+        if ("organisation" in val[i]) {
+          if ("parentId" in val[i]["organisation"]) {
+            if (!(val[i]["organisation"]["val"] in this.parentColors)) {
+              this.parentColors[val[i]["organisation"]["parentId"]["val"]] =
+                this.generateLightColorHex();
+            }
+            this.parents[val[i]["organisation"]["id"]] =
+              val[i]["organisation"]["parentId"]["val"];
+          }
+        }
+      }
+
       for (let i in val) {
         if (max_width < val[i].position[2] * 2 + 200) {
           max_width = val[i].position[2] * 2 + 200;
@@ -274,6 +293,7 @@ export default {
           max_height = val[i].position[3] * 2 + 200;
         }
       }
+
       this.configKonva = {
         width: max_width,
         height: max_height,

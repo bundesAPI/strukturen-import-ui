@@ -45,8 +45,11 @@
           />
         </v-form>
       </v-col>
+      {{ valid }}
       <v-btn @click="previousItem()">previous </v-btn>
-      <v-btn color="primary" @click="nextItem()"> next </v-btn>
+      <v-btn color="primary" :disabled="!valid" @click="nextItem()">
+        next
+      </v-btn>
     </v-row>
   </div>
 </template>

@@ -61,8 +61,14 @@ export default {
 
               <div style="color:#08011E;position:absolute;right:20px;top:17px;font-size:10px;"><i class="fas fa-ellipsis-h"></i></div>
 
-              <div style="font-size:15px;color:#08011E;margin-left:20px;margin-top:32px"> ${d.data.organisation.shortName} </div>
-              <div style="color:#716E7B;margin-left:20px;margin-top:3px;font-size:10px;"> ${d.data.organisation.name} </div>
+              <div style="font-size:15px;color:#08011E;margin-left:20px;margin-top:32px">${
+                d.data.organisation.shortName
+                  ? d.data.organisation.shortName
+                  : d.data.organisation.name
+              }</span></div>
+              <div style="color:#716E7B;margin-left:20px;margin-top:3px;font-size:10px;"> ${
+                d.data.organisation.shortName ? d.data.organisation.name : ""
+              } </div>
 
 
            </div>
