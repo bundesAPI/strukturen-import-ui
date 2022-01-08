@@ -134,7 +134,7 @@ export default {
     },
     handleStageMouseMove(e) {
       let selectionRectangle = this.$refs.selectionRectangle.getNode();
-      // no nothing if we didn't start selection
+      // do nothing if we didn't start selection
       if (!selectionRectangle.visible()) {
         return;
       }
@@ -286,14 +286,13 @@ export default {
       let max_height = this.configKonva.height;
       let max_width = this.configKonva.width;
       for (let i in val) {
-        if (max_width < val[i].position[2] * 2 + 200) {
-          max_width = val[i].position[2] * 2 + 200;
+        if (max_width < val[i].source.position[2] * 2 + 200) {
+          max_width = val[i].source.position[2] * 2 + 200;
         }
-        if (max_height < val[i].position[3] * 2 + 200) {
-          max_height = val[i].position[3] * 2 + 200;
+        if (max_height < val[i].source.position[3] * 2 + 200) {
+          max_height = val[i].source.position[3] * 2 + 200;
         }
       }
-
       this.configKonva = {
         width: max_width,
         height: max_height,
