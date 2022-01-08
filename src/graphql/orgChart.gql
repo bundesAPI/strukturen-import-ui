@@ -1,5 +1,5 @@
-query orgChart($id: ID!){
-  orgChart(id:$id) {
+query orgChart($id: ID!) {
+  orgChart(id: $id) {
     id
     status
     document
@@ -7,6 +7,22 @@ query orgChart($id: ID!){
     rawSource
     orgChartUrl {
       url
+      organisationEntity {
+        id
+        name
+        shortName
+        locations {
+          edges {
+            node {
+              id
+              name
+              street
+              postalCode
+              city
+            }
+          }
+        }
+      }
     }
   }
 }

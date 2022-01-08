@@ -9,12 +9,17 @@
         <v-divider></v-divider>
 
         <v-stepper-step :complete="e1 > 2" :step="2">
+          Configure Parsing
+        </v-stepper-step>
+        <v-divider></v-divider>
+
+        <v-stepper-step :complete="e1 > 3" :step="3">
           Review NER
         </v-stepper-step>
 
         <v-divider></v-divider>
 
-        <v-stepper-step :step="3"> Review Result </v-stepper-step>
+        <v-stepper-step :step="4"> Review Result </v-stepper-step>
       </v-stepper-header>
 
       <v-stepper-items>
@@ -29,19 +34,28 @@
             ></OrgchartEditor>
           </v-main>
         </v-stepper-content>
-
         <v-stepper-content :step="2">
+          <v-main>
+            <OrgchartParserConfiguration
+              @configurationDone="configurationDone"
+              :id="$route.params.id"
+            ></OrgchartParserConfiguration>
+          </v-main>
+        </v-stepper-content>
+
+        <v-stepper-content :step="3">
           <OrgchartAnnotationEditor
             ref="orgchart_annotation_editor"
             :orgchart_id="$route.params.id"
             :dataset="dataset"
             :parents="parents"
+            :config="config"
             @annotationDone="annotationDone"
           ></OrgchartAnnotationEditor>
           <br />
         </v-stepper-content>
 
-        <v-stepper-content :step="3">
+        <v-stepper-content :step="4">
           <v-btn color="primary" @click="saveOrgChart()">Save</v-btn>
 
           <OrgchartResult :json="json"></OrgchartResult>
@@ -63,11 +77,13 @@
 import OrgchartEditor from "./../components/OrgchartEditor";
 import OrgchartAnnotationEditor from "../components/OrgchartAnnotationEditor";
 import OrgchartResult from "../components/OrgchartResult";
+import OrgchartParserConfiguration from "../components/OrgchartParserConfiguration";
 
 export default {
   name: "App",
 
   components: {
+    OrgchartParserConfiguration,
     OrgchartResult,
     OrgchartEditor,
     OrgchartAnnotationEditor,
@@ -79,9 +95,16 @@ export default {
       this.parents = this.$refs.orgchart_editor.parents;
       this.e1 = 2;
     },
+
+    configurationDone: function (config) {
+      console.log(config);
+      this.config = config;
+      this.e1 = 3;
+    },
+
     annotationDone: function (orgs) {
       this.json = orgs;
-      this.e1 = 3;
+      this.e1 = 4;
     },
 
     saveOrgChart() {
@@ -111,6 +134,7 @@ export default {
     e1: 1,
     dataset: [],
     parents: [],
+    config: {},
     json: null,
     snackbar: false,
     snackText: null,

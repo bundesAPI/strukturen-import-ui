@@ -5,6 +5,7 @@
     ></v-progress-linear>
 
     <br />
+    {{ config }}
     <v-row no-gutters>
       <v-col cols="12" sm="6">
         <img width="400" v-if="previewImage" :src="previewImage" />
@@ -60,9 +61,10 @@ import VJsf from "@koumoul/vjsf";
 import "@koumoul/vjsf/dist/main.css";
 import "regenerator-runtime/runtime";
 import { v4 as uuidv4 } from "uuid";
-
+import * as AUTH from "../auth";
+import LocationMapping from "../locationMapping";
 export default {
-  props: ["dataset", "parents", "orgchart_id"],
+  props: ["dataset", "parents", "orgchart_id", "config"],
   components: { VJsf },
   name: "OrgchartAnnotationEditor",
   watch: {
@@ -161,6 +163,10 @@ export default {
       }
       this.annotations = response;
       this.isLoading = false;
+      // add location annotation to first element for now
+      this.annotations.parsed[0].locations = new LocationMapping(
+        this.config
+      ).addLocation(this.annotations.parsed);
       this.model = { organisations: this.annotations.parsed };
     },
   },
@@ -188,6 +194,19 @@ export default {
         }
       }
       return parents;
+    },
+    allLocations() {
+      let locations = [];
+      let locList =
+        this.orgChart.orgChartUrl.organisationEntity.locations.edges;
+      for (let l in locList) {
+        locations.push({
+          val: locList[l].node.id,
+          label: ` ${locList[l].node.city} - ${locList[l].node.name}, ${locList[l].node.street}`,
+        });
+      }
+      console.log(locations);
+      return locations;
     },
   },
   data() {
@@ -241,6 +260,22 @@ export default {
                   "x-itemKey": "val",
                   "x-itemTitle": "label",
                 },
+                locations: {
+                  type: "array",
+                  title: "Locations",
+                  items: {
+                    type: "object",
+                    properties: {
+                      location: {
+                        title: "Location",
+                        "x-fromData": "context.allLocations",
+                        "x-itemKey": "val",
+                        "x-itemTitle": "label",
+                      },
+                    },
+                  },
+                },
+
                 required: ["name"],
               },
             },
@@ -255,6 +290,22 @@ export default {
       isLoading: false,
       results: {},
     };
+  },
+
+  apollo: {
+    orgChart: {
+      query() {
+        return require("../graphql/orgChart.gql");
+      },
+      skip() {
+        return AUTH.isLoggedIn() === false;
+      },
+      variables() {
+        return {
+          id: this.$props.orgchart_id,
+        };
+      },
+    },
   },
 };
 </script>
