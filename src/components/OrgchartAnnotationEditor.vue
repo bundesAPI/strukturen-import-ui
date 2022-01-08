@@ -5,7 +5,6 @@
     ></v-progress-linear>
 
     <br />
-    {{ config }}
     <v-row no-gutters>
       <v-col cols="12" sm="6">
         <img width="400" v-if="previewImage" :src="previewImage" />
