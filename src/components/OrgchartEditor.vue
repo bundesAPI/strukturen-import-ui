@@ -249,7 +249,7 @@ export default {
         delete_ids.push(this.selected[i]);
       }
       for (let itm in this.dataset) {
-        if (delete_ids.includes(this.dataset[itm].id)) {
+        if (delete_ids.includes(this.dataset[itm]["source"].id)) {
           this.dataset.splice(itm, 1);
         }
       }
@@ -258,7 +258,7 @@ export default {
 
   watch: {
     orgChart(orgchart) {
-      if (orgchart.status === "PARSED") {
+      if (orgchart.status !== "NEW") {
         this.dataset = JSON.parse(orgchart.rawSource);
       } else {
         this.axios
@@ -269,9 +269,7 @@ export default {
       }
     },
     dataset: function (val) {
-      let max_height = this.configKonva.height;
-      let max_width = this.configKonva.width;
-
+      console.log(val);
       for (let i in val) {
         if ("organisation" in val[i]) {
           if ("parentId" in val[i]["organisation"]) {
@@ -285,6 +283,8 @@ export default {
         }
       }
 
+      let max_height = this.configKonva.height;
+      let max_width = this.configKonva.width;
       for (let i in val) {
         if (max_width < val[i].position[2] * 2 + 200) {
           max_width = val[i].position[2] * 2 + 200;

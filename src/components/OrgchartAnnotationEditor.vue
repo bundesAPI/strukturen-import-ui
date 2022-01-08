@@ -12,13 +12,13 @@
         <br />
         <h4>Text</h4>
         <span style="white-space: pre">{{
-          this.$props.dataset[this.idx].text
+          this.$props.dataset[this.idx].source.text
         }}</span>
         <br />
         <h4>Colors</h4>
         <div
           v-bind:key="c"
-          v-for="c in this.$props.dataset[this.idx].colors"
+          v-for="c in this.$props.dataset[this.idx].source.colors"
           :style="{
             width: '30px',
             display: 'inline-block',
@@ -45,7 +45,6 @@
           />
         </v-form>
       </v-col>
-      {{ valid }}
       <v-btn @click="previousItem()">previous </v-btn>
       <v-btn color="primary" :disabled="!valid" @click="nextItem()">
         next
@@ -73,9 +72,6 @@ export default {
     dataset: function () {
       this.loadData();
     },
-    annotations: function (val) {
-      this.model = { organisations: val.parsed };
-    },
   },
   methods: {
     loadData() {
@@ -83,13 +79,16 @@ export default {
         process.env.VUE_APP_ORGCHART_ML
       }/orgchart-image/?orgchart_id=${
         this.$props.orgchart_id
-      }&page=0&position=${this.$props.dataset[this.idx].position.join(
+      }&page=0&position=${this.$props.dataset[this.idx].source.position.join(
         "&position="
       )}`;
-
       if (this.idx in this.results) {
-        this.model = this.results[this.idx]["parsed"];
         this.annotations = this.results[this.idx]["annotations"];
+        console.log("in dazaset");
+        console.log(this.results[this.idx]);
+        this.model = {};
+        this.model["organisations"] = this.results[this.idx]["parsed"];
+        console.log(this.model);
       } else {
         this.isLoading = true;
         this.axios
@@ -97,7 +96,7 @@ export default {
             `${
               process.env.VUE_APP_ORGCHART_ML
             }/analyze-orgchart-entry/?text=${encodeURI(
-              this.$props.dataset[this.idx].text
+              this.$props.dataset[this.idx].source.text
             )}`
           )
           .then((response) => this.loadAnnotationsDone(response["data"]));
@@ -105,6 +104,8 @@ export default {
     },
     storeCurrentItem() {
       this.results[this.idx] = {};
+      console.log("store current item");
+      console.log(this.model);
       this.results[this.idx]["parsed"] = this.model["organisations"];
       this.results[this.idx]["annotations"] = this.annotations;
       this.annotations = [];
@@ -124,7 +125,7 @@ export default {
         for (let e in this.results[o]["parsed"]) {
           orgs.push({
             organisation: this.results[o]["parsed"][e],
-            source: this.$props.dataset[o],
+            source: this.$props.dataset[o].source,
           });
         }
       }
@@ -141,17 +142,17 @@ export default {
     },
     loadAnnotationsDone(response) {
       // add the element id to the first element in our list
-      response["parsed"][0]["id"] = this.dataset[this.idx]["id"];
+      response["parsed"][0]["id"] = this.dataset[this.idx].source.id;
       // give each other element a new uuid and assign each of them the common parent id
       for (let i in response["parsed"]) {
         if (!("id" in response["parsed"][i])) {
           response["parsed"][i]["id"] = uuidv4();
         }
         // assign parent id
-        if (this.dataset[this.idx]["id"] in this.$props.parents) {
-          console.log(this.$props.parents[this.dataset[this.idx]["id"]]);
+        if (this.dataset[this.idx].source.id in this.$props.parents) {
+          console.log(this.$props.parents[this.dataset[this.idx].source.id]);
           response["parsed"][i]["parentId"] = {
-            val: this.$props.parents[this.dataset[this.idx]["id"]],
+            val: this.$props.parents[this.dataset[this.idx].source.id],
           };
         } else {
           // if there is no parent, assign null.
@@ -160,6 +161,7 @@ export default {
       }
       this.annotations = response;
       this.isLoading = false;
+      this.model = { organisations: this.annotations.parsed };
     },
   },
   computed: {
@@ -177,12 +179,12 @@ export default {
         }
       }
       for (let i in this.dataset) {
-        if (!(this.dataset[i]["id"] in parent_keys)) {
+        if (!(this.dataset[i].source.id in parent_keys)) {
           parents.push({
-            val: this.dataset[i]["id"],
-            label: this.dataset[i]["text"],
+            val: this.dataset[i].source.id,
+            label: this.dataset[i].source.text,
           });
-          parent_keys.push(this.dataset[i]["id"]);
+          parent_keys.push(this.dataset[i].source.id);
         }
       }
       return parents;
