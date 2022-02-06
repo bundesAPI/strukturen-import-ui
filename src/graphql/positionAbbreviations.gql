@@ -1,0 +1,14 @@
+{
+allPositionAbbreviations {
+  edges {
+    node {
+      name
+      id
+      position {
+      id
+      name
+      }
+    }
+  }
+}
+}

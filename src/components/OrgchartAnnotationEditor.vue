@@ -159,6 +159,20 @@ export default {
           // if there is no parent, assign null.
           response["parsed"][i]["parentId"] = { val: null, label: "No Parent" };
         }
+        // assign position id
+
+        for (let person in response["parsed"][i]["people"]) {
+          console.log(response["parsed"][i]["people"][person]["position"]);
+          if (
+            response["parsed"][i]["people"][person]["position"] in
+            this.allPositionAbbreviationsObject
+          ) {
+            response["parsed"][i]["people"][person]["position"] =
+              this.allPositionAbbreviationsObject[
+                response["parsed"][i]["people"][person]["position"]
+              ];
+          }
+        }
       }
       this.annotations = response;
       this.isLoading = false;
@@ -193,6 +207,27 @@ export default {
         }
       }
       return parents;
+    },
+
+    allPositionAbbreviationsList() {
+      let abbreviations = [];
+      let al = this.allPositionAbbreviations.edges;
+      for (let a in al) {
+        abbreviations.push({
+          val: al[a].node.id,
+          label: ` ${al[a].node.name} - ${al[a].node.position.name}`,
+        });
+      }
+      return abbreviations;
+    },
+
+    allPositionAbbreviationsObject() {
+      let abbreviations = {};
+      let al = this.allPositionAbbreviations.edges;
+      for (let a in al) {
+        abbreviations[al[a].node.name] = al[a].node.id;
+      }
+      return abbreviations;
     },
     allLocations() {
       let locations = [];
@@ -242,7 +277,13 @@ export default {
                     type: "object",
                     properties: {
                       name: { type: "string" },
-                      position: { type: "string" },
+                      position: {
+                        type: "string",
+                        title: "Position",
+                        "x-fromData": "context.allPositionAbbreviationsList",
+                        "x-itemKey": "val",
+                        "x-itemTitle": "label",
+                      },
                     },
                     required: ["name"],
                   },
@@ -303,6 +344,12 @@ export default {
         return {
           id: this.$props.orgchart_id,
         };
+      },
+    },
+
+    allPositionAbbreviations: {
+      query() {
+        return require("../graphql/positionAbbreviations.gql");
       },
     },
   },
